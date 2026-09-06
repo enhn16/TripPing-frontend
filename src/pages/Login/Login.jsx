@@ -1,12 +1,21 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MobileLayout from '../../components/MobileLayout';
-import { startKakaoLogin } from '../../components/auth';
+import { startKakaoLogin, isLoggedIn } from '../../components/auth';
 import loginBack from '../../assets/login_back.jpg';
 import logoW from '../../assets/logoW.png';
 import './Login.css';
 
 export default function Login() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // 토큰이 존재하여 이미 로그인된 상태라면 바로 /select 화면으로 이동
+    if (isLoggedIn()) {
+      navigate('/select', { replace: true });
+    }
+  }, [navigate]);
+  
 
   const handleGuest = () => {
     navigate('/select');

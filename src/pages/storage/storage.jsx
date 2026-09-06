@@ -6,7 +6,7 @@ import ArchiveCard from './ArchiveCard';
 import symbolImg from '../../assets/symbolW.png';
 import './storage.css';
 import { BookMarked } from 'lucide-react';
-import { getSavedCourses } from './api'; // 👈 api.js의 함수 import
+import { getSavedCourses } from './api'; // api.js의 함수 import
 
 function formatDate(isoDate) {
   if (!isoDate) return '';
@@ -19,7 +19,6 @@ function formatDate(isoDate) {
 
 export default function Storage({ courses: coursesOverride, onNavigateHome, onSelectCourse }) {
   const navigate = useNavigate();
-  // 초기값을 빈 배열로 시작 (데이터 로딩 전 목업 노출 방지)
   const [fetchedCourses, setFetchedCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,8 +32,8 @@ export default function Storage({ courses: coursesOverride, onNavigateHome, onSe
 
     async function loadCourses() {
       try {
-        // client.js를 통해 JWT 토큰과 userId가 포함된 요청이 정상 전달됨
         const data = await getSavedCourses();
+        console.log('[보관함] 가져온 코스 목록:', data); // 응답 배열 확인용
         if (!ignore) {
           setFetchedCourses(data);
         }
@@ -53,10 +52,12 @@ export default function Storage({ courses: coursesOverride, onNavigateHome, onSe
 
   const courses = coursesOverride ?? fetchedCourses;
 
-  // 최신순 정렬
-  const sortedCourses = [...courses].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-  );
+  // createdAt 또는 savedAt 기준 최신순 정렬
+  const sortedCourses = [...courses].sort((a, b) => {
+    const timeA = new Date(b.createdAt ?? b.savedAt ?? 0).getTime();
+    const timeB = new Date(a.createdAt ?? a.savedAt ?? 0).getTime();
+    return timeA - timeB;
+  });
 
   const hasCourses = sortedCourses.length > 0;
 

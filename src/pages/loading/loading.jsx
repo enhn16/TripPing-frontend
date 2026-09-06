@@ -77,6 +77,9 @@ export default function LoadingScreen() {
 
   const { userName: stateUserName, next } = location.state ?? {};
 
+  // 1. 중복 요청 방지용 ref 추가
+  const hasRequestedRef = useRef(false);
+
   // 넘겨받은 userName이 없으면 localStorage에 저장된 실제 유저 이름 조회
   const userName = stateUserName || getUserName();
 
@@ -129,6 +132,10 @@ export default function LoadingScreen() {
       return;
     }
 
+    // StrictMode에 의해 재실행되어도 이미 요청을 보냈다면 스킵
+    if (hasRequestedRef.current) return;
+    hasRequestedRef.current = true;
+
     let cancelled = false;
 
     resolveNextState(next)
@@ -139,7 +146,6 @@ export default function LoadingScreen() {
       .catch((err) => {
         if (cancelled) return;
         console.error(`[loading] ${next.path} 준비 중 오류:`, err);
-        // TODO: 에러 화면/토스트 등 정식 UX가 정해지면 alert 대신 그걸로 교체
         alert(err.message || '요청 처리 중 문제가 발생했어요. 다시 시도해주세요.');
         navigate(-1);
       });
