@@ -1,7 +1,7 @@
 // src/pages/result/api.js
 
 import { apiPost } from '../../api/client';
-import { isLoggedIn, getUserId } from '../../components/auth';
+import { isLoggedIn } from '../../components/auth';
 
 async function createCourse({
   mainPlaceId,
@@ -25,8 +25,10 @@ async function createCourse({
   });
 }
 
-async function saveCourse(courseId, userId) {
-  return apiPost(`/api/saved-courses?userId=${encodeURIComponent(userId)}`, { courseId });
+// POST /api/saved-courses - userId 쿼리 파라미터 없이 JWT(Authorization 헤더)만으로 인증됨
+// (백엔드 스펙 변경: security bearerAuth)
+async function saveCourse(courseId) {
+  return apiPost('/api/saved-courses', { courseId });
 }
 
 const formatTag = (t) =>
@@ -68,9 +70,8 @@ export async function prepareCourseResult({
   const courseData = rawResponse?.data ?? rawResponse;
 
   // 보관함 자동 저장 (회원만)
-  const userId = getUserId();
-  if (isLoggedIn() && userId && courseData?.courseId) {
-    saveCourse(courseData.courseId, userId).catch((err) => {
+  if (isLoggedIn() && courseData?.courseId) {
+    saveCourse(courseData.courseId).catch((err) => {
       if (err.status === 409) return;
       console.error('보관함 자동 저장 실패:', err.message);
     });

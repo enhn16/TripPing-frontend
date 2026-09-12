@@ -1,12 +1,11 @@
 // src/pages/MainSpots/api.js
 // POST /api/recommendations - ConditionInput에서 입력한 조건으로 메인 관광지 3곳 추천받기.
 // 실제 호출은 loading.jsx가 함 (next.path === '/spots'일 때).
-import { apiPost } from '../../api/client';
+// GET /api/places/{placeId} - 상세보기 클릭 시 상세 정보 조회 (MainSpots.jsx가 호출).
+import { apiGet, apiPost } from '../../api/client';
 
 // ConditionInput의 companion 키(alone/friend/pet/parents/kid/partner) ->
 // 백엔드 RecommendationRequest.companion enum.
-// 백엔드 enum이 UI의 6종(혼자/친구/반려동물/부모님/아이/연인)과 동일하게 확장돼서,
-// 화면 표시용 라벨(COMPANION_LABELS)을 그대로 API 요청값으로도 씀 - 별도 근사 매핑 불필요.
 const CATEGORY_TO_TRAVEL_TYPE = {
   nature: '자연',
   city: '도시',
@@ -50,23 +49,41 @@ export function buildRecommendationRequest(condition) {
 }
 
 // RecommendedPlace -> MainSpots 화면(SpotCard)이 쓰는 spot 형태로 변환.
-// 주소/영업시간/요금/주차/반려동물/전화는 이 API 응답에 없어서(RecommendedPlace 스키마 참고)
-// 우선 "정보 없음"으로 채워둠. 상세 내용은 추후 백엔드 스펙 변경 시 다시 채우면 됨.
+// 주소/영업시간/요금/주차/전화 등 상세 정보는 이 추천 API 응답에 없음(RecommendedPlace 스키마 참고).
+// "상세보기" 클릭 시 getPlaceDetail()로 별도 조회해서 채움 (MainSpots.jsx 참고).
 function adaptPlace(place) {
   return {
     id: place.placeId,
     name: place.name,
-    summary: place.description || place.summary,
+    summary: place.summary,
     thumbnail: place.imageUrl || null,
     lat: place.latitude,
     lng: place.longitude,
-    address: place.address || '정보 없음',
-    hours: place.hours || '정보 없음',
-    fee: place.fee || '정보 없음',
-    parking: place.parking || '정보 없음',
-    pet: place.pet || '정보 없음',
-    phone: place.phoneNumber || '정보 없음',
   };
+}
+
+// PlaceDetailResponse -> SpotCard 상세 영역이 쓰는 필드로 변환.
+function adaptPlaceDetail(detail) {
+  const hoursLines = [detail.openingHours, detail.restDate ? `휴무일: ${detail.restDate}` : null].filter(
+    Boolean
+  );
+
+  return {
+    address: detail.address || '정보 없음',
+    hours: hoursLines.length > 0 ? hoursLines : '정보 없음',
+    fee: detail.admissionFee || '정보 없음',
+    parking: detail.parking || '정보 없음',
+    phone: detail.phoneNumber || '정보 없음',
+  };
+}
+
+/**
+ * 관광지 상세 정보 조회 (상세보기 클릭 시 호출)
+ * @param {string} placeId
+ */
+export async function getPlaceDetail(placeId) {
+  const data = await apiGet(`/api/places/${encodeURIComponent(placeId)}`);
+  return adaptPlaceDetail(data);
 }
 
 /**

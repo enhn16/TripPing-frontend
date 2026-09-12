@@ -7,22 +7,39 @@ import {
   Clock,
   Ticket,
   Car,
-  PawPrint,
   Phone,
   ImageOff,
 } from 'lucide-react'
 import MobileLayout from '../../components/MobileLayout'
 import { loadKakaoMapScript, getCssVar } from '../../components/kakaoMap'
+import { getPlaceDetail } from './api'
 import './MainSpots.css'
+
+// 상세보기 요청 중/실패 시 DetailRow에 표시할 임시 값들
+const LOADING_DETAIL = {
+  address: '불러오는 중...',
+  hours: '불러오는 중...',
+  fee: '불러오는 중...',
+  parking: '불러오는 중...',
+  phone: '불러오는 중...',
+}
+const FAILED_DETAIL = {
+  address: '정보 없음',
+  hours: '정보 없음',
+  fee: '정보 없음',
+  parking: '정보 없음',
+  phone: '정보 없음',
+}
 
 // lucide-react의 MapPin 아이콘과 동일한 모양의 마커 DOM을 만듭니다.
 // (카카오맵 CustomOverlay는 React 엘리먼트가 아니라 실제 DOM 노드를 요구해서 직접 SVG로 구현)
+// 크기/그림자는 ExpandSelection.jsx의 createPlacePinElement와 통일 (26→32, 강조 시에만 그림자).
 function createSpotPinElement({ color, big }) {
-  const size = big ? 34 : 30
+  const size = big ? 32 : 26
   const wrapper = document.createElement('div')
   wrapper.style.cursor = 'pointer'
-  wrapper.style.filter = 'drop-shadow(0 3px 4px rgba(0, 0, 0, 0.25))'
-  wrapper.style.transition = 'transform 0.15s ease'
+  wrapper.style.transition = 'all 0.2s ease'
+  wrapper.style.filter = big ? 'drop-shadow(0px -2px 4px rgba(0, 0, 0, 0.25))' : 'none'
   wrapper.innerHTML = `
     <svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}" xmlns="http://www.w3.org/2000/svg">
       <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -36,7 +53,8 @@ function MainSpots() {
   const navigate = useNavigate()
   const location = useLocation()
   // loading.jsx가 recommendMainSpots() 응답으로 채워서 넘겨줌: recommendationSessionId,
-  // spots(id/name/summary/thumbnail/lat/lng/address/hours/fee/parking/pet/phone), title
+  // spots(id/name/summary/thumbnail/lat/lng), title
+  // 주소/영업시간/요금/주차/전화 등 상세 정보는 상세보기 클릭 시 getPlaceDetail()로 별도 조회함.
   // + 원래 조건 입력값들(category/age/companion/region/extraRequest)도 그대로 같이 있음.
   const conditionState = location.state ?? {}
   const spots = conditionState.spots ?? []
@@ -45,7 +63,15 @@ function MainSpots() {
   const [selectedId, setSelectedId] = useState(null)
   const [focusedId, setFocusedId] = useState(null)
 
-  const openSpot = openSpotId ? spots.find((s) => s.id === openSpotId) : null
+  // 상세보기에서 쓸 GET /api/places/{placeId} 결과 캐시 (spot.id -> 상세 필드)
+  const [detailCache, setDetailCache] = useState({})
+  const [detailLoadingId, setDetailLoadingId] = useState(null)
+
+  const baseOpenSpot = openSpotId ? spots.find((s) => s.id === openSpotId) : null
+  const openSpotExtra = openSpotId
+    ? (detailCache[openSpotId] ?? (openSpotId === detailLoadingId ? LOADING_DETAIL : FAILED_DETAIL))
+    : null
+  const openSpot = baseOpenSpot ? { ...baseOpenSpot, ...openSpotExtra } : null
   const canSubmit = selectedId !== null
 
   const cardRefs = useRef({})
@@ -70,6 +96,22 @@ function MainSpots() {
     setOpenSpotId(id)
     // 상세 화면에서 보고 있는 장소가 지도에서도 눈에 띄도록, 핀 클릭 때와 동일하게 포커스 이동
     setFocusedId(id)
+
+    // 이미 조회해둔 상세 정보가 있으면 재요청하지 않음
+    if (detailCache[id]) return
+
+    setDetailLoadingId(id)
+    getPlaceDetail(id)
+      .then((detail) => {
+        setDetailCache((prev) => ({ ...prev, [id]: detail }))
+      })
+      .catch((err) => {
+        console.error('[관광지 상세] 조회 실패:', err.message)
+        setDetailCache((prev) => ({ ...prev, [id]: FAILED_DETAIL }))
+      })
+      .finally(() => {
+        setDetailLoadingId((prev) => (prev === id ? null : prev))
+      })
   }
 
   const handlePinClick = (id) => {
@@ -316,7 +358,6 @@ function SpotCard({
           <DetailRow icon={Clock} text={Array.isArray(spot.hours) ? spot.hours.join('\n') : spot.hours} />
           <DetailRow icon={Ticket} text={spot.fee} />
           <DetailRow icon={Car} text={spot.parking} />
-          <DetailRow icon={PawPrint} text={spot.pet} />
           <DetailRow icon={Phone} text={spot.phone} />
         </div>
       )}
