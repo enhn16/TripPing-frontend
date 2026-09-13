@@ -6,10 +6,13 @@ import { ChevronLeft } from 'lucide-react';
 import MobileLayout from '../../components/MobileLayout';
 import CourseResultView from '../../components/CourseResultView';
 import { getSavedCourseDetail } from './api';
-import { mockCourseResult } from '../result/mockData';
 
 export default function StorageDetail() {
   const { savedCourseId } = useParams();
+  return <SavedCourseDetail key={savedCourseId} savedCourseId={savedCourseId} />;
+}
+
+function SavedCourseDetail({ savedCourseId }) {
   const navigate = useNavigate();
 
   const [courseData, setCourseData] = useState(null);
@@ -24,9 +27,7 @@ export default function StorageDetail() {
         if (!ignore) setCourseData(data);
       })
       .catch((err) => {
-        console.warn('[보관함 상세] 조회 실패, 목업 데이터로 대체합니다:', err.message);
-        // 백엔드 API 연동 검증 단계에서 실패 시 화면 테스트를 위해 목업 폴백 유지
-        if (!ignore) setCourseData({ ...mockCourseResult, courseId: savedCourseId });
+        if (!ignore) setLoadError(err);
       });
 
     return () => {
@@ -48,17 +49,27 @@ export default function StorageDetail() {
             </button>
           </div>
         </header>
-        <p style={{ padding: '24px', textAlign: 'center' }}>코스를 불러오지 못했어요.</p>
+        <p role="alert" style={{ padding: '24px', textAlign: 'center' }}>
+          {loadError.status === 404
+            ? '저장된 코스가 만료되었거나 삭제되었습니다.'
+            : loadError.message || '코스를 불러오지 못했어요. 다시 시도해 주세요.'}
+        </p>
       </MobileLayout>
     );
   }
 
   // 데이터 로딩 중
-  if (!courseData) return null;
+  if (!courseData) return (
+    <MobileLayout background="#F5F7F8">
+      <p role="status" style={{ padding: '24px', textAlign: 'center' }}>저장된 코스를 불러오는 중이에요.</p>
+    </MobileLayout>
+  );
+
+  const savedDate = courseData.createdAt?.slice(0, 10).replaceAll('-', '.');
 
   return (
     <MobileLayout background="#F5F7F8">
-      <CourseResultView courseData={courseData} />
+      <CourseResultView courseData={courseData} headerTitle={savedDate ? `${savedDate}. 의 기록` : '저장된 여행 기록'} />
     </MobileLayout>
   );
 }

@@ -43,7 +43,7 @@ export function buildRecommendationRequest(condition) {
     age: Number(age),
     companion: COMPANION_LABELS[companion] ?? companion,
     // '없음'(선호 지역 미선택)이면 region 필드 자체를 생략
-    ...(region && region !== '없음' ? region: {}),
+    ...(region && region !== '없음' ? { region } : {}),
     ...(extraRequest ? { requirement: extraRequest } : {}),
   };
 }

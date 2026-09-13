@@ -77,8 +77,8 @@ export default function LoadingScreen() {
 
   const { userName: stateUserName, next } = location.state ?? {};
 
-  // 1. 중복 요청 방지용 ref 추가
-  const hasRequestedRef = useRef(false);
+  // 같은 화면 전환의 요청은 재사용하고, Effect마다 결과 처리만 연결합니다.
+  const requestRef = useRef(null);
 
   // 넘겨받은 userName이 없으면 localStorage에 저장된 실제 유저 이름 조회
   const userName = stateUserName || getUserName();
@@ -132,13 +132,19 @@ export default function LoadingScreen() {
       return;
     }
 
-    // StrictMode에 의해 재실행되어도 이미 요청을 보냈다면 스킵
-    if (hasRequestedRef.current) return;
-    hasRequestedRef.current = true;
+    // StrictMode 재실행에서는 기존 Promise에 다시 연결합니다.
+    // 새로운 화면 전환이나 조건에는 별도의 요청을 보냅니다.
+    if (requestRef.current?.key !== location.key || requestRef.current?.next !== next) {
+      requestRef.current = {
+        key: location.key,
+        next,
+        promise: resolveNextState(next),
+      };
+    }
 
     let cancelled = false;
 
-    resolveNextState(next)
+    requestRef.current.promise
       .then((resolvedState) => {
         if (cancelled) return;
         navigate(next.path, { state: resolvedState, replace: true });
@@ -153,8 +159,7 @@ export default function LoadingScreen() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [next, navigate]);
+  }, [next, navigate, location.key]);
 
   const currentPhrase = phrases[phraseIndex];
   const lines = currentPhrase.rest.split('\n');
