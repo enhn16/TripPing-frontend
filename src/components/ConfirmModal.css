@@ -44,16 +44,18 @@
 
 .confirm-modal__btn {
   flex: 1;
+  min-width: 0;
   height: 44px;
   border: none;
   border-radius: 15px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  white-space: nowrap;
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
