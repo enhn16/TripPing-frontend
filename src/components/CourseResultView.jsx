@@ -11,7 +11,7 @@ import { useCourseCapture } from './useCourseCapture';
 
 import './CourseResultView.css';
 
-export default function CourseResultView({ courseData }) {
+export default function CourseResultView({ courseData, headerTitle }) {
   const navigate = useNavigate();
   const { cardRef, listRef, lineRect, saving, sharing, handleSaveImage, handleShareImage } =
     useCourseCapture(courseData);
@@ -33,16 +33,16 @@ export default function CourseResultView({ courseData }) {
           >
             <ChevronLeft size={20} />
           </button>
-          <button
+          {headerTitle ? <span className="course-result-header__title">{headerTitle}</span> : <button
             className="course-result-header__box course-result-header__home"
             onClick={() => navigate('/select')}
             aria-label="홈으로"
           >
             <img src={symbolW} alt="" />
-          </button>
+          </button>}
         </div>
 
-        <div className="course-result-header__group">
+        {!headerTitle && <div className="course-result-header__group">
           <button
             className="course-result-header__box course-result-header__action"
             onClick={handleSaveImage}
@@ -59,7 +59,7 @@ export default function CourseResultView({ courseData }) {
           >
             <Share2 size={20} />
           </button>
-        </div>
+        </div>}
       </header>
 
       {/* ── 코스 결과 카드 ── */}
