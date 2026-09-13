@@ -229,6 +229,13 @@ body::-webkit-scrollbar {
   flex-shrink: 0;
 }
 
+/* 캡처(이미지 저장/공유) 중에는 장소 사진을 뺌: 외부 이미지 호스트가 CORS를 안 열어주면
+   html-to-image가 캔버스에 못 그려서 회색 placeholder만 찍히는 문제 회피용.
+   pin은 position:absolute라 사진을 빼도 위치는 그대로 유지됨. */
+.is-capturing .course-result-card__place-thumb {
+  display: none;
+}
+
 .course-result-card__place-name {
   display: inline-block;
   font-size: 14px;

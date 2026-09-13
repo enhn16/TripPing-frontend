@@ -45,7 +45,7 @@ export default function ArchiveCard({ mapImageUrl, title, tags, date, onClick })
         <div className="archive-card__tags">
           {tags.map((tag) => (
             <span key={tag} className="archive-card__tag">
-              #{tag}
+              {tag}
             </span>
           ))}
         </div>
