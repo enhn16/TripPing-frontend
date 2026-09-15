@@ -3,7 +3,7 @@
 // 화면별 api.js 파일들이 이걸 가져다 씀.
 import { getAuthToken } from '../components/auth';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -33,7 +33,7 @@ async function request(path, options = {}) {
       ...options,
       headers,
     });
-  } catch (err) {
+  } catch {
     // 네트워크 자체가 실패한 경우 (서버 꺼짐, CORS 등)
     throw new ApiError(
       `서버에 연결할 수 없습니다. VITE_API_BASE_URL(${BASE_URL || '(비어있음)'})이 맞는지 확인해주세요.`,

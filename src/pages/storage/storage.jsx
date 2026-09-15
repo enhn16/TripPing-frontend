@@ -1,11 +1,11 @@
 // src/pages/storage/storage.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MobileLayout from '../../components/MobileLayout';
+import WebLayout from '../../components/WebLayout';
 import ArchiveCard from './ArchiveCard';
-import symbolImg from '../../assets/symbolW.png';
 import './storage.css';
 import { BookMarked } from 'lucide-react';
+import { isLoggedIn } from '../../components/auth';
 import { getSavedCourses } from './api'; // api.js의 함수 import
 
 function formatDate(isoDate) {
@@ -17,28 +17,27 @@ function formatDate(isoDate) {
   return `${yyyy}.${mm}.${dd}.`;
 }
 
-export default function Storage({ courses: coursesOverride, onNavigateHome, onSelectCourse }) {
+export default function Storage({ courses: coursesOverride, onSelectCourse }) {
   const navigate = useNavigate();
   const [fetchedCourses, setFetchedCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!coursesOverride && isLoggedIn());
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (coursesOverride) {
-      setLoading(false);
-      return;
-    }
+    if (coursesOverride || !isLoggedIn()) return;
 
     let ignore = false;
 
     async function loadCourses() {
       try {
         const data = await getSavedCourses();
-        console.log('[보관함] 가져온 코스 목록:', data); // 응답 배열 확인용
+
         if (!ignore) {
           setFetchedCourses(data);
         }
       } catch (err) {
         console.error('[보관함] 목록 조회 실패:', err);
+        if (!ignore) setError('여행 기록을 불러오지 못했어요. 잠시 후 다시 시도해주세요.');
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -61,14 +60,6 @@ export default function Storage({ courses: coursesOverride, onNavigateHome, onSe
 
   const hasCourses = sortedCourses.length > 0;
 
-  const handleHome = () => {
-    if (onNavigateHome) {
-      onNavigateHome();
-      return;
-    }
-    navigate('/select');
-  };
-
   const handleSelectCourse = (savedCourseId) => {
     if (onSelectCourse) {
       onSelectCourse(savedCourseId);
@@ -78,7 +69,7 @@ export default function Storage({ courses: coursesOverride, onNavigateHome, onSe
   };
 
   return (
-    <MobileLayout background="linear-gradient(180deg, #ffffff 0%, var(--color-ground) 40%, var(--color-sub) 100%)">
+    <WebLayout background="linear-gradient(180deg, #ffffff 0%, var(--color-ground) 40%, var(--color-sub) 100%)">
       <div className="archive-page">
         <header className="archive-header">
           <div className="archive-header__text">
@@ -95,16 +86,12 @@ export default function Storage({ courses: coursesOverride, onNavigateHome, onSe
             </p>
           </div>
 
-          <button
-            type="button"
-            className="archive-header__home-button"
-            onClick={handleHome}
-            aria-label="홈으로 이동"
-          >
-            <img src={symbolImg} alt="" />
-          </button>
         </header>
 
+        {!coursesOverride && !isLoggedIn() && (
+          <p style={{ padding: '24px 0' }}>로그인하면 저장한 여행 기록을 볼 수 있어요. <button onClick={() => navigate('/')} style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>로그인하기</button></p>
+        )}
+        {error && <p role="alert" style={{ padding: '24px 0' }}>{error}</p>}
         <div className="archive-list-wrap">
           <div className="archive-list">
             {sortedCourses.map((course) => (
@@ -124,6 +111,6 @@ export default function Storage({ courses: coursesOverride, onNavigateHome, onSe
           <div className="archive-list__fade" aria-hidden="true" />
         </div>
       </div>
-    </MobileLayout>
+    </WebLayout>
   );
 }

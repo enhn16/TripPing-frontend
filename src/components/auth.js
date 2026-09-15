@@ -28,7 +28,7 @@ const KAKAO_REDIRECT_URI = `${window.location.origin}/select`;
 // .env에 VITE_DEV_FORCE_LOGIN=true 를 넣으면 항상 로그인된 것처럼 취급하고,
 // 실제 로그인 세션이 없으면 아래 TEMP_DEV_USER_ID를 userId로 사용함.
 // 카카오 로그인이 실제로 붙으면 이 스위치는 꺼두거나(.env에서 제거) 통째로 지우면 됨.
-const DEV_FORCE_LOGIN = import.meta.env.VITE_DEV_FORCE_LOGIN === 'true';
+const DEV_FORCE_LOGIN = import.meta.env.DEV && import.meta.env.VITE_DEV_FORCE_LOGIN === 'true';
 const TEMP_DEV_USER_ID = 'dev-test-user-1';
 
 // 카카오 로그인 JS SDK를 동적으로 로드하고 Kakao.init()까지 마친 뒤 window.Kakao를 돌려줌.
@@ -75,8 +75,14 @@ function loadKakaoSdk() {
 // 로그인 버튼 클릭 시 호출. 카카오 로그인 페이지로 이동시키고(전체 페이지 리다이렉트),
 // 로그인이 끝나면 카카오가 KAKAO_REDIRECT_URI로 ?code=...를 붙여 돌려보냄.
 export async function startKakaoLogin() {
-  const Kakao = await loadKakaoSdk();
-  Kakao.Auth.authorize({ redirectUri: KAKAO_REDIRECT_URI });
+  try {
+    if (!KAKAO_JS_KEY) throw new Error('로그인을 준비 중이에요. 잠시 후 다시 시도해주세요.');
+    const Kakao = await loadKakaoSdk();
+    Kakao.Auth.authorize({ redirectUri: KAKAO_REDIRECT_URI });
+  } catch (err) {
+    console.error('Kakao login failed:', err);
+    alert('카카오 로그인을 시작하지 못했어요. 잠시 후 다시 시도해주세요.');
+  }
 }
 
 // 리다이렉트로 돌아온 페이지(/select)에서 마운트 시 호출.

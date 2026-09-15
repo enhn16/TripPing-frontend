@@ -1,17 +1,19 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import * as htmlToImage from 'html-to-image';
-import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
-import { Media } from '@whiteguru/capacitor-plugin-media';
-
-function isPermissionError(err) {
-  const text = `${err?.message ?? ''} ${err?.code ?? ''}`.toLowerCase();
-  return text.includes('permission') || text.includes('denied');
+function downloadImage(dataUrl, fileName) {
+  const link = document.createElement('a');
+  link.href = dataUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 }
 
 export function useCourseCapture(courseData) {
+  const courseId = courseData?.courseId ?? 'course';
+  const courseTitle = courseData?.courseTitle ?? '나의 여행 코스';
+  const busyRef = useRef(false);
   const cardRef = useRef(null);
   const listRef = useRef(null);
 
@@ -51,6 +53,7 @@ export function useCourseCapture(courseData) {
   const captureCard = useCallback(async () => {
     const cardEl = cardRef.current;
     const listEl = listRef.current;
+    if (!cardEl || !listEl) throw new Error('저장할 카드가 없습니다.');
     const prevMaxHeight = listEl.style.maxHeight;
     const prevOverflow = listEl.style.overflowY;
 
@@ -102,101 +105,50 @@ export function useCourseCapture(courseData) {
     return dataUrl;
   }, [measureLine]);
 
-  const writeCapturedFile = useCallback(
-    async (dataUrl) => {
-      const fileName = `tripping_${courseData.courseId}_${Date.now()}.png`;
-      const base64Data = dataUrl.split(',')[1];
-
-      const writeResult = await Filesystem.writeFile({
-        path: fileName,
-        data: base64Data,
-        directory: Directory.Cache,
-      });
-
-      return writeResult.uri;
-    },
-    [courseData?.courseId]
-  );
-
-  // ---------- 갤러리 저장 ----------
   const handleSaveImage = useCallback(async () => {
-    if (saving) return;
+    if (busyRef.current) return;
+    busyRef.current = true;
     setSaving(true);
     try {
-      const dataUrl = await captureCard();
-
-      if (Capacitor.isNativePlatform()) {
-        const fileUri = await writeCapturedFile(dataUrl);
-
-        try {
-          await Media.savePhoto({ path: fileUri, album: { name: 'TripPing' } });
-          alert('갤러리에 카드가 저장되었습니다!');
-        } catch (mediaErr) {
-          if (isPermissionError(mediaErr)) {
-            alert(
-              '갤러리 저장 권한이 꺼져 있어요.\n설정 > 앱 > TripPing > 권한에서 "사진 및 동영상"을 허용한 뒤 다시 시도해주세요.'
-            );
-            return;
-          }
-          throw mediaErr;
-        }
-      } else {
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = `tripping_${courseData.courseId}.png`;
-        link.click();
-      }
+      downloadImage(await captureCard(), `tripping_${courseId}.png`);
     } catch (err) {
       console.error(err);
       alert('이미지 저장에 실패했어요. 다시 시도해주세요.');
     } finally {
+      busyRef.current = false;
       setSaving(false);
     }
-  }, [saving, captureCard, writeCapturedFile, courseData?.courseId]);
+  }, [captureCard, courseId]);
 
-  // ---------- 공유 ----------
   const handleShareImage = useCallback(async () => {
-    if (sharing) return;
+    if (busyRef.current) return;
+    busyRef.current = true;
     setSharing(true);
     try {
       const dataUrl = await captureCard();
-
-      if (Capacitor.isNativePlatform()) {
-        const fileUri = await writeCapturedFile(dataUrl);
-
-        await Share.share({
-          title: courseData.courseTitle,
-          url: fileUri,
-          dialogTitle: '코스 카드 공유',
-        });
-        return;
-      }
-
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      const file = new File([blob], `tripping_${courseData.courseId}.png`, { type: 'image/png' });
-
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          title: courseData.courseTitle,
-          files: [file],
-        });
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], `tripping_${courseId}.png`, { type: 'image/png' });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ title: courseTitle, files: [file] });
+        } catch (err) {
+          if (err?.name === 'AbortError') return;
+          // Some browsers lose user activation while the image is being rendered.
+          downloadImage(dataUrl, file.name);
+          alert('이 브라우저에서는 바로 공유할 수 없어 이미지를 다운로드했어요.');
+        }
       } else {
-        alert('웹 미리보기에서는 공유시트를 지원하지 않아요. 이미지를 다운로드할게요.');
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = `tripping_${courseData.courseId}.png`;
-        link.click();
+        downloadImage(dataUrl, file.name);
+        alert('공유할 수 있도록 여행 카드 이미지를 다운로드했어요.');
       }
     } catch (err) {
-      if (err?.name !== 'AbortError') {
-        console.error(err);
-        alert('이미지 공유에 실패했어요. 다시 시도해주세요.');
-      }
+      console.error(err);
+      alert('이미지 공유에 실패했어요. 다시 시도해주세요.');
     } finally {
+      busyRef.current = false;
       setSharing(false);
     }
-  }, [sharing, captureCard, writeCapturedFile, courseData?.courseId, courseData?.courseTitle]);
+  }, [captureCard, courseId, courseTitle]);
 
   return {
     cardRef,

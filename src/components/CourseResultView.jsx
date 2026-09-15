@@ -33,35 +33,21 @@ export default function CourseResultView({ courseData, headerTitle }) {
           >
             <ChevronLeft size={20} />
           </button>
-          {headerTitle ? <span className="course-result-header__title">{headerTitle}</span> : <button
-            className="course-result-header__box course-result-header__home"
-            onClick={() => navigate('/select')}
-            aria-label="홈으로"
-          >
-            <img src={symbolW} alt="" />
-          </button>}
+          {headerTitle && <span className="course-result-header__title">{headerTitle}</span>}
         </div>
 
-        {!headerTitle && <div className="course-result-header__group">
-          <button
-            className="course-result-header__box course-result-header__action"
-            onClick={handleSaveImage}
-            disabled={saving}
-            aria-label="이미지 저장"
-          >
-            <Download size={20} />
-          </button>
-          <button
-            className="course-result-header__box course-result-header__action"
-            onClick={handleShareImage}
-            disabled={sharing}
-            aria-label="공유하기"
-          >
-            <Share2 size={20} />
-          </button>
-        </div>}
+
       </header>
 
+      <div className="course-result-content">
+        <div className="course-result-actions">
+          <button className="course-result-actions__save" onClick={handleSaveImage} disabled={saving || sharing}>
+            <Download size={20} /> {saving ? '저장 중...' : '이미지 저장'}
+          </button>
+          <button className="course-result-actions__share" onClick={handleShareImage} disabled={saving || sharing}>
+            <Share2 size={20} /> {sharing ? '공유 준비 중...' : '공유하기'}
+          </button>
+        </div>
       {/* ── 코스 결과 카드 ── */}
       <div className="course-result-card" ref={cardRef}>
         <div className="course-result-card__top">
@@ -145,22 +131,6 @@ export default function CourseResultView({ courseData, headerTitle }) {
         </div>
       </div>
 
-      {/* ── 하단 버튼 (완독 후 전환용) ── */}
-      <div className="course-result-actions">
-        <button
-          className="course-result-actions__save"
-          onClick={handleSaveImage}
-          disabled={saving}
-        >
-          {saving ? '저장 중...' : '이미지 저장'}
-        </button>
-        <button
-          className="course-result-actions__share"
-          onClick={handleShareImage}
-          disabled={sharing}
-        >
-          {sharing ? '공유 준비 중...' : '공유하기'}
-        </button>
       </div>
     </>
   );

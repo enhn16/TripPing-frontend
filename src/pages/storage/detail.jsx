@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 
-import MobileLayout from '../../components/MobileLayout';
+import WebLayout from '../../components/WebLayout';
 import CourseResultView from '../../components/CourseResultView';
 import { getSavedCourseDetail } from './api';
 
@@ -37,7 +37,7 @@ function SavedCourseDetail({ savedCourseId }) {
 
   if (loadError) {
     return (
-      <MobileLayout background="#F5F7F8">
+      <WebLayout background="#F5F7F8">
         <header className="course-result-header">
           <div className="course-result-header__group">
             <button
@@ -54,22 +54,22 @@ function SavedCourseDetail({ savedCourseId }) {
             ? '저장된 코스가 만료되었거나 삭제되었습니다.'
             : loadError.message || '코스를 불러오지 못했어요. 다시 시도해 주세요.'}
         </p>
-      </MobileLayout>
+      </WebLayout>
     );
   }
 
   // 데이터 로딩 중
   if (!courseData) return (
-    <MobileLayout background="#F5F7F8">
+    <WebLayout background="#F5F7F8">
       <p role="status" style={{ padding: '24px', textAlign: 'center' }}>저장된 코스를 불러오는 중이에요.</p>
-    </MobileLayout>
+    </WebLayout>
   );
 
   const savedDate = courseData.createdAt?.slice(0, 10).replaceAll('-', '.');
 
   return (
-    <MobileLayout background="#F5F7F8">
+    <WebLayout background="#F5F7F8">
       <CourseResultView courseData={courseData} headerTitle={savedDate ? `${savedDate}. 의 기록` : '저장된 여행 기록'} />
-    </MobileLayout>
+    </WebLayout>
   );
 }

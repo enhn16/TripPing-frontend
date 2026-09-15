@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import MobileLayout from '../../components/MobileLayout';
+import WebLayout from '../../components/WebLayout';
 import { formatDisplayName, getUserName } from '../../components/auth';
 import './loading.css';
 import symbolW from '../../assets/symbolW.png';
@@ -165,7 +165,7 @@ export default function LoadingScreen() {
   const lines = currentPhrase.rest.split('\n');
 
   return (
-    <MobileLayout background="var(--color-primary)">
+    <WebLayout background="var(--color-primary)">
       <div className="loading-screen">
         <div className="loading-content">
           <img
@@ -190,6 +190,6 @@ export default function LoadingScreen() {
           </p>
         </div>
       </div>
-    </MobileLayout>
+    </WebLayout>
   );
 }

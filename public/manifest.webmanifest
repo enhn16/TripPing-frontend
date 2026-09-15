@@ -1,46 +1,10 @@
 {
-  "icons": [
-    {
-      "src": "../icons/icon-48.webp",
-      "type": "image/png",
-      "sizes": "48x48",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "../icons/icon-72.webp",
-      "type": "image/png",
-      "sizes": "72x72",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "../icons/icon-96.webp",
-      "type": "image/png",
-      "sizes": "96x96",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "../icons/icon-128.webp",
-      "type": "image/png",
-      "sizes": "128x128",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "../icons/icon-192.webp",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "../icons/icon-256.webp",
-      "type": "image/png",
-      "sizes": "256x256",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "../icons/icon-512.webp",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any maskable"
-    }
-  ]
+  "name": "TripPing — 나에게 맞는 하루 여행",
+  "short_name": "TripPing",
+  "lang": "ko",
+  "start_url": "/",
+  "display": "browser",
+  "theme_color": "#007A8C",
+  "background_color": "#F5F7F8",
+  "icons": [{ "src": "/favicon.png", "type": "image/png", "sizes": "any" }]
 }

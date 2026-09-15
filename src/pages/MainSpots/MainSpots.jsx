@@ -1,3 +1,4 @@
+const EMPTY_SPOTS = [];
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -10,7 +11,7 @@ import {
   Phone,
   ImageOff,
 } from 'lucide-react'
-import MobileLayout from '../../components/MobileLayout'
+import WebLayout from '../../components/WebLayout'
 import { loadKakaoMapScript, getCssVar } from '../../components/kakaoMap'
 import { getPlaceDetail } from './api'
 import './MainSpots.css'
@@ -57,7 +58,7 @@ function MainSpots() {
   // 주소/영업시간/요금/주차/전화 등 상세 정보는 상세보기 클릭 시 getPlaceDetail()로 별도 조회함.
   // + 원래 조건 입력값들(category/age/companion/region/extraRequest)도 그대로 같이 있음.
   const conditionState = location.state ?? {}
-  const spots = conditionState.spots ?? []
+  const spots = conditionState.spots ?? EMPTY_SPOTS
 
   const [openSpotId, setOpenSpotId] = useState(null)
   const [selectedId, setSelectedId] = useState(null)
@@ -165,6 +166,20 @@ function MainSpots() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Keep the map aligned when the browser crosses a responsive breakpoint.
+  useEffect(() => {
+    const map = mapObjRef.current;
+    const container = mapContainerRef.current;
+    if (!mapReady || !map || !container) return;
+    const observer = new ResizeObserver(() => {
+      const center = map.getCenter();
+      map.relayout();
+      map.setCenter(center);
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [mapReady]);
+
   // 2) 상태(선택/포커스/상세보기)가 바뀔 때마다 핀(커스텀 오버레이) 다시 그리기
   useEffect(() => {
     const kakao = window.kakao
@@ -198,7 +213,6 @@ function MainSpots() {
       overlay.setMap(mapObjRef.current)
       overlaysRef.current.push(overlay)
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, spots, selectedId, focusedId, openSpotId])
 
   // 3) 목록에서 카드를 포커스했을 때(또는 핀 클릭) 지도도 해당 위치로 부드럽게 이동
@@ -239,7 +253,7 @@ function MainSpots() {
   }
 
   return (
-    <MobileLayout>
+    <WebLayout>
       <div className="main-spots">
         <div className="main-spots__map">
           {/* 카카오맵이 그려지는 영역. 핀은 위 useEffect에서 CustomOverlay로 그립니다. */}
@@ -296,7 +310,7 @@ function MainSpots() {
           </div>
         </div>
       </div>
-    </MobileLayout>
+    </WebLayout>
   )
 }
 

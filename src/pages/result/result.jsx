@@ -5,7 +5,7 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import MobileLayout from '../../components/MobileLayout';
+import WebLayout from '../../components/WebLayout';
 import CourseResultView from '../../components/CourseResultView';
 
 export default function Result() {
@@ -23,8 +23,8 @@ export default function Result() {
   if (!courseData) return null;
 
   return (
-    <MobileLayout background="#F5F7F8">
+    <WebLayout background="#F5F7F8">
       <CourseResultView courseData={courseData} />
-    </MobileLayout>
+    </WebLayout>
   );
 }

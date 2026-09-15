@@ -1,7 +1,6 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
 import Landing from './pages/Landing/Landing';
-import Login from './pages/Login/Login';
 import ThreeSelect from './pages/ThreeSelect/ThreeSelect';
 import ConditionInput from './pages/ConditionInput/ConditionInput';
 import LoadingScreen from './pages/loading/loading';
@@ -11,15 +10,21 @@ import Result from './pages/result/result';
 import Storage from './pages/storage/storage';
 import StorageDetail from './pages/storage/detail';
 
+// Intermediate recommendation pages require the previous step's response.
+function TripStep({ field, children }) {
+  const { state } = useLocation();
+  return state?.[field] ? children : <Navigate to="/select" replace />;
+}
+
 // 화면 연결 순서:
-// landing -> login -> threeselect -> condition input -> loading -> mainspot
+// landing -> threeselect -> condition input -> loading -> mainspot
 //   -> loading -> expansion -> loading -> result
 // (threeselect 상단 버튼 -> storage)
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<Navigate to="/" replace />} />
       <Route path="/select" element={<ThreeSelect />} />
       <Route path="/condition" element={<ConditionInput />} />
 
@@ -29,8 +34,8 @@ function App() {
           "로딩이 끝나면 어디로, 무슨 데이터를 들고 갈지"를 넘겨줍니다. */}
       <Route path="/loading" element={<LoadingScreen />} />
 
-      <Route path="/spots" element={<MainSpots />} />
-      <Route path="/expansion" element={<ExpandSelection />} />
+      <Route path="/spots" element={<TripStep field="spots"><MainSpots /></TripStep>} />
+      <Route path="/expansion" element={<TripStep field="mainSpot"><ExpandSelection /></TripStep>} />
       <Route path="/result" element={<Result />} />
 
       {/* threeselect 상단 보관함 버튼 진입점 */}

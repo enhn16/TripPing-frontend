@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Check, Compass } from 'lucide-react';
-import MobileLayout from '../../components/MobileLayout';
+import WebLayout from '../../components/WebLayout';
 import { loadKakaoMapScript, getCssVar } from '../../components/kakaoMap';
 import './ExpandSelection.css';
 
@@ -86,6 +86,26 @@ export default function ExpandSelection() {
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState(false);
 
+  // [핵심 기능 2] 카드 본체 클릭 -> 이동/열람
+  const handleCardClick = (id) => {
+    setClickedPlaceId(id);
+
+    const cardNode = cardRefs.current.get(id);
+    if (cardNode) {
+      cardNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // 지도도 해당 장소 위치로 부드럽게 이동
+    const kakao = window.kakao;
+    if (mapReady && kakao && mapObjRef.current) {
+      const place = places.find((p) => p.placeId === id);
+      if (place) {
+        mapObjRef.current.panTo(new kakao.maps.LatLng(place.lat, place.lng));
+      }
+    }
+  };
+
+
   // 1) SDK 로드 + 지도 생성 (메인 관광지 + 추가 추천 장소가 모두 보이도록 범위 조정)
   useEffect(() => {
     let cancelled = false;
@@ -118,6 +138,20 @@ export default function ExpandSelection() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Keep the map aligned when the browser crosses a responsive breakpoint.
+  useEffect(() => {
+    const map = mapObjRef.current;
+    const container = mapContainerRef.current;
+    if (!mapReady || !map || !container) return;
+    const observer = new ResizeObserver(() => {
+      const center = map.getCenter();
+      map.relayout();
+      map.setCenter(center);
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [mapReady]);
 
   // 2) 선택/열람 상태가 바뀔 때마다 핀(커스텀 오버레이) 다시 그리기
   useEffect(() => {
@@ -185,25 +219,6 @@ export default function ExpandSelection() {
     });
   };
 
-  // [핵심 기능 2] 카드 본체 클릭 -> 이동/열람
-  const handleCardClick = (id) => {
-    setClickedPlaceId(id);
-
-    const cardNode = cardRefs.current.get(id);
-    if (cardNode) {
-      cardNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    // 지도도 해당 장소 위치로 부드럽게 이동
-    const kakao = window.kakao;
-    if (mapReady && kakao && mapObjRef.current) {
-      const place = places.find((p) => p.placeId === id);
-      if (place) {
-        mapObjRef.current.panTo(new kakao.maps.LatLng(place.lat, place.lng));
-      }
-    }
-  };
-
   const filteredPlaces = places.filter((place) => {
     if (activeCategory === '전체') return true;
     return place.category === activeCategory;
@@ -222,7 +237,7 @@ export default function ExpandSelection() {
   };
 
   return (
-    <MobileLayout>
+    <WebLayout>
       {/* -------------------- 1. Map Area -------------------- */}
       <div className="map-wrapper">
         <button
@@ -322,6 +337,6 @@ export default function ExpandSelection() {
           </button>
         </div>
       </div>
-    </MobileLayout>
+    </WebLayout>
   );
 }

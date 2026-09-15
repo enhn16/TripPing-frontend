@@ -1,4 +1,5 @@
 import './ConfirmModal.css'
+import KakaoIcon from './KakaoIcon'
 
 /**
  * 화면 이동 없이 바로 띄우는 확인 팝업.
@@ -22,7 +23,7 @@ export default function ConfirmModal({
 
   return (
     <div className="confirm-modal__backdrop" onClick={onCancel}>
-      <div className="confirm-modal__card" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-label={title} className="confirm-modal__card" onClick={(e) => e.stopPropagation()}>
         {title && <h2 className="confirm-modal__title">{title}</h2>}
         {message && <p className="confirm-modal__message">{message}</p>}
         <div className="confirm-modal__actions">
@@ -40,6 +41,7 @@ export default function ConfirmModal({
             }`}
             onClick={onConfirm}
           >
+            {confirmVariant === 'kakao' && <KakaoIcon />}
             {confirmLabel}
           </button>
         </div>

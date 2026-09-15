@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import MobileLayout from '../../components/MobileLayout';
+import WebLayout from '../../components/WebLayout';
 import { getUserName, formatDisplayName } from '../../components/auth';
 import './ConditionInput.css';
 
@@ -129,7 +129,6 @@ export default function ConditionInput() {
   const [age, setAge] = useState('');
   const [companion, setCompanion] = useState(null);
   const [region, setRegion] = useState('없음');
-  const [isRegionOpen, setIsRegionOpen] = useState(false);
   const [extraRequest, setExtraRequest] = useState('');
 
   const isFormComplete = useMemo(
@@ -148,7 +147,6 @@ export default function ConditionInput() {
 
   const handleSelectRegion = (city) => {
     setRegion(city);
-    setIsRegionOpen(false);
   };
 
   const handleSubmit = () => {
@@ -164,7 +162,7 @@ export default function ConditionInput() {
   };
 
   return (
-    <MobileLayout>
+    <WebLayout>
       <div className="condition">
         {/* 스크롤 가능한 본문 컨텐츠 */}
         <div className="condition__content web-app-scroll-y">
@@ -179,6 +177,7 @@ export default function ConditionInput() {
             </span>
           </div>
 
+          <div className="condition__fields">
           <section className="condition__card">
             <label className="condition__label" htmlFor="age-input">
               <svg viewBox="0 0 24 24" className="condition__label-icon">
@@ -237,23 +236,14 @@ export default function ConditionInput() {
                 <path d="M20 20l-4.5-4.5" />
               </svg>
               <span id="region-search" className="condition__region-value">{region}</span>
-              <button
-                type="button"
-                className={`condition__region-toggle ${isRegionOpen ? 'is-open' : ''}`}
-                onClick={() => setIsRegionOpen((prev) => !prev)}
-                aria-label="지역 목록 열기"
-              >
-                <svg viewBox="0 0 24 24">
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </button>
             </div>
-            {isRegionOpen && (
+
               <ul className="condition__region-list">
                 {REGIONS.map((city) => (
                   <li key={city}>
                     <button
                       type="button"
+                      aria-pressed={region === city}
                       className={`condition__region-item ${region === city ? 'is-selected' : ''}`}
                       onClick={() => handleSelectRegion(city)}
                     >
@@ -262,15 +252,16 @@ export default function ConditionInput() {
                   </li>
                 ))}
               </ul>
-            )}
           </section>
 
-          <section className="condition__card">
-            <p className="condition__label">
+          </div>
+          <section className="condition__card condition__extra">
+            <label className="condition__label" htmlFor="extra-request">
               <span className="condition__plus-icon">+</span>
               추가 요구 사항
-            </p>
+            </label>
             <textarea
+              id="extra-request"
               className="condition__textarea"
               maxLength={MAX_REQUEST_LENGTH}
               placeholder={'예시:\n· 맛집 위주로\n· 걷기 싫어요\n· 실내 활동 선호\n· ...'}
@@ -295,6 +286,6 @@ export default function ConditionInput() {
           </button>
         </div>
       </div>
-    </MobileLayout>
+    </WebLayout>
   );
 }
