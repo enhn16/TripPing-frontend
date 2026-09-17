@@ -9,11 +9,13 @@ import ExpandSelection from './pages/expansion/ExpandSelection';
 import Result from './pages/result/result';
 import Storage from './pages/storage/storage';
 import StorageDetail from './pages/storage/detail';
+import { loadStepState } from './components/sessionState';
 
 // Intermediate recommendation pages require the previous step's response.
 function TripStep({ field, children }) {
   const { state } = useLocation();
-  return state?.[field] ? children : <Navigate to="/select" replace />;
+  const effectiveState = state?.[field] ? state : loadStepState();
+  return effectiveState?.[field] ? children : <Navigate to="/select" replace />;
 }
 
 // 화면 연결 순서:

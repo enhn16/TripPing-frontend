@@ -1,6 +1,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import * as htmlToImage from 'html-to-image';
+
 function downloadImage(dataUrl, fileName) {
   const link = document.createElement('a');
   link.href = dataUrl;
@@ -57,6 +58,12 @@ export function useCourseCapture(courseData) {
     const prevMaxHeight = listEl.style.maxHeight;
     const prevOverflow = listEl.style.overflowY;
 
+    const thumbEls = Array.from(cardEl.querySelectorAll('.course-result-card__place-thumb'));
+    const prevThumbBackgrounds = thumbEls.map((el) => el.style.backgroundImage);
+    thumbEls.forEach((el) => {
+      el.style.backgroundImage = 'none';
+    });
+
     cardEl.classList.add('is-capturing');
     listEl.style.maxHeight = 'none';
     listEl.style.overflowY = 'visible';
@@ -99,18 +106,23 @@ export function useCourseCapture(courseData) {
       cardEl.classList.remove('is-capturing');
       listEl.style.maxHeight = prevMaxHeight;
       listEl.style.overflowY = prevOverflow;
+      thumbEls.forEach((el, i) => {
+        el.style.backgroundImage = prevThumbBackgrounds[i];
+      });
       setLineRect(measureLine());
     }
 
     return dataUrl;
   }, [measureLine]);
 
+  // ---------- 브라우저 다운로드 ----------
   const handleSaveImage = useCallback(async () => {
     if (busyRef.current) return;
     busyRef.current = true;
     setSaving(true);
     try {
-      downloadImage(await captureCard(), `tripping_${courseId}.png`);
+      const dataUrl = await captureCard();
+      downloadImage(dataUrl, `tripping_${courseId}.png`);
     } catch (err) {
       console.error(err);
       alert('이미지 저장에 실패했어요. 다시 시도해주세요.');
@@ -120,30 +132,39 @@ export function useCourseCapture(courseData) {
     }
   }, [captureCard, courseId]);
 
+  // ---------- 이미지 파일 공유 (Web Share API) ----------
   const handleShareImage = useCallback(async () => {
     if (busyRef.current) return;
     busyRef.current = true;
     setSharing(true);
     try {
       const dataUrl = await captureCard();
-      const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], `tripping_${courseId}.png`, { type: 'image/png' });
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const fileName = `tripping_${courseId}.png`;
+      const file = new File([blob], fileName, { type: 'image/png' });
+
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         try {
-          await navigator.share({ title: courseTitle, files: [file] });
-        } catch (err) {
-          if (err?.name === 'AbortError') return;
-          // Some browsers lose user activation while the image is being rendered.
-          downloadImage(dataUrl, file.name);
+          await navigator.share({
+            title: courseTitle,
+            files: [file],
+          });
+        } catch (shareErr) {
+          if (shareErr?.name === 'AbortError') return;
+          // 공유 권한 오류 또는 취소 시 다운로드로 fallback
+          downloadImage(dataUrl, fileName);
           alert('이 브라우저에서는 바로 공유할 수 없어 이미지를 다운로드했어요.');
         }
       } else {
-        downloadImage(dataUrl, file.name);
+        downloadImage(dataUrl, fileName);
         alert('공유할 수 있도록 여행 카드 이미지를 다운로드했어요.');
       }
     } catch (err) {
-      console.error(err);
-      alert('이미지 공유에 실패했어요. 다시 시도해주세요.');
+      if (err?.name !== 'AbortError') {
+        console.error(err);
+        alert('이미지 공유에 실패했어요. 다시 시도해주세요.');
+      }
     } finally {
       busyRef.current = false;
       setSharing(false);

@@ -7,12 +7,20 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import WebLayout from '../../components/WebLayout';
 import CourseResultView from '../../components/CourseResultView';
+import { saveStepState, loadStepState } from '../../components/sessionState';
 
 export default function Result() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const courseData = location.state?.result;
+  const savedState = loadStepState();
+  const courseData = location.state?.result ?? savedState?.result;
+
+  useEffect(() => {
+    if (location.state?.result) {
+      saveStepState(location.state);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (!courseData) {

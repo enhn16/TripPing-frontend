@@ -13,6 +13,7 @@ import symbol from '../../assets/symbol.png';
 import natureImg from '../../assets/nature.jpg';
 import cityImg from '../../assets/city.jpg';
 import complexImg from '../../assets/complex.jpg';
+import { clearStepState } from '../../components/sessionState';
 import './ThreeSelect.css';
 
 const CATEGORIES = [
@@ -51,7 +52,7 @@ export default function ThreeSelect() {
   };
 
   const handleSelectCategory = (categoryKey) => {
-    // TODO: 여행 조건 입력 화면 라우트 연결
+    clearStepState();
     navigate('/condition', { state: { category: categoryKey } });
   };
 

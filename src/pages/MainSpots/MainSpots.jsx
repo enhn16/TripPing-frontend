@@ -1,5 +1,5 @@
 const EMPTY_SPOTS = [];
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   ChevronLeft,
@@ -10,9 +10,11 @@ import {
   Car,
   Phone,
   ImageOff,
+  Map,
 } from 'lucide-react'
 import WebLayout from '../../components/WebLayout'
 import { loadKakaoMapScript, getCssVar } from '../../components/kakaoMap'
+import { saveStepState, loadStepState } from '../../components/sessionState'
 import { getPlaceDetail } from './api'
 import './MainSpots.css'
 
@@ -23,6 +25,7 @@ const LOADING_DETAIL = {
   fee: '불러오는 중...',
   parking: '불러오는 중...',
   phone: '불러오는 중...',
+  kakaoMapUrl: null,
 }
 const FAILED_DETAIL = {
   address: '정보 없음',
@@ -30,6 +33,7 @@ const FAILED_DETAIL = {
   fee: '정보 없음',
   parking: '정보 없음',
   phone: '정보 없음',
+  kakaoMapUrl: null,
 }
 
 // lucide-react의 MapPin 아이콘과 동일한 모양의 마커 DOM을 만듭니다.
@@ -53,12 +57,17 @@ function createSpotPinElement({ color, big }) {
 function MainSpots() {
   const navigate = useNavigate()
   const location = useLocation()
-  // loading.jsx가 recommendMainSpots() 응답으로 채워서 넘겨줌: recommendationSessionId,
-  // spots(id/name/summary/thumbnail/lat/lng), title
-  // 주소/영업시간/요금/주차/전화 등 상세 정보는 상세보기 클릭 시 getPlaceDetail()로 별도 조회함.
-  // + 원래 조건 입력값들(category/age/companion/region/extraRequest)도 그대로 같이 있음.
-  const conditionState = location.state ?? {}
+  const conditionState = useMemo(() => {
+    const savedState = loadStepState()
+    return location.state?.spots ? location.state : (savedState?.spots ? savedState : {})
+  }, [location.state])
   const spots = conditionState.spots ?? EMPTY_SPOTS
+
+  useEffect(() => {
+    if (conditionState?.spots?.length) {
+      saveStepState(conditionState)
+    }
+  }, [conditionState])
 
   const [openSpotId, setOpenSpotId] = useState(null)
   const [selectedId, setSelectedId] = useState(null)
@@ -67,10 +76,42 @@ function MainSpots() {
   // 상세보기에서 쓸 GET /api/places/{placeId} 결과 캐시 (spot.id -> 상세 필드)
   const [detailCache, setDetailCache] = useState({})
   const [detailLoadingId, setDetailLoadingId] = useState(null)
+  const [fetchingMap, setFetchingMap] = useState({})
+
+  // 화면 진입 시 추천된 관광지(3곳)의 상세 정보를 백그라운드에서 미리 조회(prefetch)
+  useEffect(() => {
+    if (!spots || spots.length === 0) return
+
+    spots.forEach((spot) => {
+      if (!spot.id || detailCache[spot.id] || fetchingMap[spot.id]) return
+
+      setFetchingMap((prev) => ({ ...prev, [spot.id]: true }))
+      getPlaceDetail(spot.id)
+        .then((detail) => {
+          setDetailCache((prev) => ({ ...prev, [spot.id]: detail }))
+        })
+        .catch((err) => {
+          console.warn(`[관광지 상세 사전 로드 실패: ${spot.name}]`, err.message)
+        })
+        .finally(() => {
+          setFetchingMap((prev) => {
+            const next = { ...prev }
+            delete next[spot.id]
+            return next
+          })
+          setDetailLoadingId((prev) => (prev === spot.id ? null : prev))
+        })
+    })
+  }, [spots, detailCache, fetchingMap])
 
   const baseOpenSpot = openSpotId ? spots.find((s) => s.id === openSpotId) : null
+  const isDetailLoading =
+    openSpotId &&
+    !detailCache[openSpotId] &&
+    (openSpotId === detailLoadingId || Boolean(fetchingMap[openSpotId]))
+
   const openSpotExtra = openSpotId
-    ? (detailCache[openSpotId] ?? (openSpotId === detailLoadingId ? LOADING_DETAIL : FAILED_DETAIL))
+    ? (detailCache[openSpotId] ?? (isDetailLoading ? LOADING_DETAIL : FAILED_DETAIL))
     : null
   const openSpot = baseOpenSpot ? { ...baseOpenSpot, ...openSpotExtra } : null
   const canSubmit = selectedId !== null
@@ -102,6 +143,11 @@ function MainSpots() {
     if (detailCache[id]) return
 
     setDetailLoadingId(id)
+
+    // 이미 백그라운드에서 조회 중이면 중복 호출하지 않음
+    if (fetchingMap[id]) return
+
+    setFetchingMap((prev) => ({ ...prev, [id]: true }))
     getPlaceDetail(id)
       .then((detail) => {
         setDetailCache((prev) => ({ ...prev, [id]: detail }))
@@ -111,6 +157,11 @@ function MainSpots() {
         setDetailCache((prev) => ({ ...prev, [id]: FAILED_DETAIL }))
       })
       .finally(() => {
+        setFetchingMap((prev) => {
+          const next = { ...prev }
+          delete next[id]
+          return next
+        })
         setDetailLoadingId((prev) => (prev === id ? null : prev))
       })
   }
@@ -324,6 +375,21 @@ function SpotCard({
   onToggleSelect,
   ref,
 }) {
+  const titleRef = useRef(null)
+  const [isLongTitle, setIsLongTitle] = useState(() => (spot?.name?.length ?? 0) >= 12)
+
+  useEffect(() => {
+    if (!titleRef.current) return
+    const checkHeight = () => {
+      if (titleRef.current) {
+        setIsLongTitle(titleRef.current.offsetHeight > 32)
+      }
+    }
+    checkHeight()
+    window.addEventListener('resize', checkHeight)
+    return () => window.removeEventListener('resize', checkHeight)
+  }, [spot?.name])
+
   return (
     <div
       ref={ref}
@@ -347,12 +413,19 @@ function SpotCard({
         </div>
         <div className="spot-card__info">
           <h3
+            ref={titleRef}
             className={`spot-card__title ${!expanded ? 'spot-card__title--link' : ''}`}
             onClick={!expanded ? onOpenDetail : undefined}
           >
             {spot.name}
           </h3>
-          <p className={`spot-card__summary ${expanded ? '' : 'spot-card__summary--clamp'}`}>
+          <p
+            className={`spot-card__summary ${
+              expanded
+                ? ''
+                : `spot-card__summary--clamp ${isLongTitle ? 'spot-card__summary--clamp-3' : ''}`
+            }`.trim()}
+          >
             {spot.summary}
           </p>
         </div>
@@ -373,17 +446,29 @@ function SpotCard({
           <DetailRow icon={Ticket} text={spot.fee} />
           <DetailRow icon={Car} text={spot.parking} />
           <DetailRow icon={Phone} text={spot.phone} />
+          {spot.kakaoMapUrl && (
+            <DetailRow icon={Map}>
+              <a
+                href={spot.kakaoMapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="spot-card__kakao-map-link"
+              >
+                카카오맵에서 위치 확인하기
+              </a>
+            </DetailRow>
+          )}
         </div>
       )}
     </div>
   )
 }
 
-function DetailRow({ icon: Icon, text }) {
+function DetailRow({ icon: Icon, text, children }) {
   return (
     <div className="detail-row">
       <Icon size={17} className="detail-row__icon" />
-      <span className="detail-row__text">{text}</span>
+      {children ? children : <span className="detail-row__text">{text}</span>}
     </div>
   )
 }

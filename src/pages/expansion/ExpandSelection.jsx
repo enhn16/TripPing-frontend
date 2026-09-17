@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Check, Compass } from 'lucide-react';
 import WebLayout from '../../components/WebLayout';
 import { loadKakaoMapScript, getCssVar } from '../../components/kakaoMap';
+import { saveStepState, loadStepState } from '../../components/sessionState';
 import './ExpandSelection.css';
 
 // 메인 관광지 핀 (원형 배지 + Compass 아이콘). .main-pin-badge 스타일과 동일하게 맞췄습니다.
@@ -53,10 +54,19 @@ const CATEGORIES = ['전체', '관광지', '식당', '카페'];
 export default function ExpandSelection() {
   const navigate = useNavigate();
   const location = useLocation();
-  const incomingState = location.state ?? {};
+  const incomingState = useMemo(() => {
+    const savedState = loadStepState();
+    return location.state?.mainSpot ? location.state : (savedState?.mainSpot ? savedState : {});
+  }, [location.state]);
   // loading.jsx가 recommendNearbyPlaces() 응답으로 채워서 넘겨줌
   // (placeId/name/category/summary/imageUrl/lat/lng)
   const places = incomingState.places ?? [];
+
+  useEffect(() => {
+    if (incomingState?.mainSpot) {
+      saveStepState(incomingState);
+    }
+  }, [incomingState]);
 
   const cardRefs = useRef(new Map());
 

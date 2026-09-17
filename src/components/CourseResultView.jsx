@@ -11,6 +11,58 @@ import { useCourseCapture } from './useCourseCapture';
 
 import './CourseResultView.css';
 
+/**
+ * 백엔드에서 소수점 소요시간이 "약 7시간.5"처럼 비정상 포맷으로 전달되는 경우를
+ * "약 7시간 30분" 등 자연스러운 한국어 시간 표기로 보정하는 유틸
+ */
+function formatDuration(duration) {
+  if (!duration && duration !== 0) return '약 -시간';
+
+  if (typeof duration === 'number') {
+    const h = Math.floor(duration);
+    const m = Math.round((duration - h) * 60);
+    return `약 ${h}시간${m > 0 ? ` ${m}분` : ''}`;
+  }
+
+  if (typeof duration === 'string') {
+    const trimmed = duration.trim();
+    if (!trimmed) return '약 -시간';
+
+    const hasApprox = trimmed.startsWith('약 ') || trimmed.startsWith('약');
+    const prefix = hasApprox ? '약 ' : '';
+    const clean = trimmed.replace(/^약\s*/, '');
+
+    // Case 1: 백엔드에서 소수점이 '시간' 뒤로 붙은 경우 (예: "7시간.5")
+    const matchWrongDot = clean.match(/^(\d+)\s*시간\s*\.\s*(\d+)/);
+    if (matchWrongDot) {
+      const h = matchWrongDot[1];
+      const m = Math.round(Number(`0.${matchWrongDot[2]}`) * 60);
+      return `${prefix || '약 '}${h}시간${m > 0 ? ` ${m}분` : ''}`;
+    }
+
+    // Case 2: "7.5시간" 형태
+    const matchDecimalHours = clean.match(/^(\d+)\.(\d+)\s*시간/);
+    if (matchDecimalHours) {
+      const h = matchDecimalHours[1];
+      const m = Math.round(Number(`0.${matchDecimalHours[2]}`) * 60);
+      return `${prefix || '약 '}${h}시간${m > 0 ? ` ${m}분` : ''}`;
+    }
+
+    // Case 3: 순수 숫자 문자열 (예: "7.5")
+    if (!isNaN(Number(clean))) {
+      const num = Number(clean);
+      const h = Math.floor(num);
+      const m = Math.round((num - h) * 60);
+      return `약 ${h}시간${m > 0 ? ` ${m}분` : ''}`;
+    }
+
+    // Case 4: 이미 완성된 정상 문자열 (예: "약 5시간", "약 7시간 30분")
+    return trimmed;
+  }
+
+  return String(duration);
+}
+
 export default function CourseResultView({ courseData, headerTitle }) {
   const navigate = useNavigate();
   const { cardRef, listRef, lineRect, saving, sharing, handleSaveImage, handleShareImage } =
@@ -23,7 +75,7 @@ export default function CourseResultView({ courseData, headerTitle }) {
 
   return (
     <>
-      {/* ── 상단 헤더: 좌(이동 그룹) / 우(액션 그룹) ── */}
+      {/* ── 상단 헤더: 좌(이동 그룹) & 중앙(액션 버튼: 저장/공유) ── */}
       <header className="course-result-header">
         <div className="course-result-header__group">
           <button
@@ -36,10 +88,6 @@ export default function CourseResultView({ courseData, headerTitle }) {
           {headerTitle && <span className="course-result-header__title">{headerTitle}</span>}
         </div>
 
-
-      </header>
-
-      <div className="course-result-content">
         <div className="course-result-actions">
           <button className="course-result-actions__save" onClick={handleSaveImage} disabled={saving || sharing}>
             <Download size={20} /> {saving ? '저장 중...' : '이미지 저장'}
@@ -48,8 +96,11 @@ export default function CourseResultView({ courseData, headerTitle }) {
             <Share2 size={20} /> {sharing ? '공유 준비 중...' : '공유하기'}
           </button>
         </div>
-      {/* ── 코스 결과 카드 ── */}
-      <div className="course-result-card" ref={cardRef}>
+      </header>
+
+      <div className="course-result-content">
+        {/* ── 코스 결과 카드 ── */}
+        <div className="course-result-card" ref={cardRef}>
         <div className="course-result-card__top">
           <h1 className="course-result-card__title">{courseData.courseTitle}</h1>
           <p className="course-result-card__desc">{courseData.description}</p>
@@ -117,7 +168,7 @@ export default function CourseResultView({ courseData, headerTitle }) {
               <FlagTriangleRight size={17} /> 총 {placeCount}곳 방문
             </span>
             <span>
-              <Clock size={17} /> 예상 소요시간: {courseData.estimatedDuration ?? '약 -시간'}
+              <Clock size={17} /> 예상 소요시간: {formatDuration(courseData.estimatedDuration)}
             </span>
           </div>
         </div>
@@ -130,6 +181,10 @@ export default function CourseResultView({ courseData, headerTitle }) {
           </div>
         </div>
       </div>
+
+      <p className="course-result-source">
+        관광지 정보 및 이미지 출처: 한국관광공사
+      </p>
 
       </div>
     </>

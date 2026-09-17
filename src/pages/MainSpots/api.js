@@ -68,12 +68,18 @@ function adaptPlaceDetail(detail) {
     Boolean
   );
 
+  const kakaoMapUrl =
+    detail.latitude != null && detail.longitude != null
+      ? `https://map.kakao.com/link/map/${encodeURIComponent(detail.name ?? '')},${detail.latitude},${detail.longitude}`
+      : null;
+
   return {
     address: detail.address || '정보 없음',
     hours: hoursLines.length > 0 ? hoursLines : '정보 없음',
     fee: detail.admissionFee || '정보 없음',
     parking: detail.parking || '정보 없음',
     phone: detail.phoneNumber || '정보 없음',
+    kakaoMapUrl,
   };
 }
 
