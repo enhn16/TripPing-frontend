@@ -16,6 +16,7 @@ import WebLayout from '../../components/WebLayout'
 import { loadKakaoMapScript, getCssVar } from '../../components/kakaoMap'
 import { saveStepState, loadStepState } from '../../components/sessionState'
 import { getPlaceDetail } from './api'
+import { toHttps } from '../../utils/url'
 import './MainSpots.css'
 
 // 상세보기 요청 중/실패 시 DetailRow에 표시할 임시 값들
@@ -406,7 +407,7 @@ function SpotCard({
       <div className="spot-card__top">
         <div className="spot-card__thumb">
           {spot.thumbnail ? (
-            <img src={spot.thumbnail} alt={spot.name} />
+            <img src={toHttps(spot.thumbnail)} alt={spot.name} />
           ) : (
             <ImageOff size={20} className="spot-card__thumb-placeholder-icon" />
           )}

@@ -8,6 +8,7 @@ import { ChevronLeft, MapPin, Clock, Share2, FlagTriangleRight, Download } from 
 import symbolW from '../assets/symbolW.png';
 import logoW from '../assets/logoW.png';
 import { useCourseCapture } from './useCourseCapture';
+import { toHttps } from '../utils/url';
 
 import './CourseResultView.css';
 
@@ -123,7 +124,7 @@ export default function CourseResultView({ courseData, headerTitle }) {
             className="course-result-card__map"
             role="img"
             aria-label="코스 지도"
-            style={courseData.mapImageUrl ? { backgroundImage: `url("${courseData.mapImageUrl}")` } : undefined}
+            style={courseData.mapImageUrl ? { backgroundImage: `url("${toHttps(courseData.mapImageUrl)}")` } : undefined}
           />
 
           <ul className="course-result-card__list" ref={listRef}>
@@ -140,7 +141,7 @@ export default function CourseResultView({ courseData, headerTitle }) {
                 <li key={place.placeId} className="course-result-card__place">
                   <span className="course-result-card__place-pin">
                     <MapPin
-                      size={20}
+                       size={20}
                       preserveAspectRatio="none"
                       color="var(--color-accent, #ff9f5a)"
                       fill={isMain ? 'none' : 'var(--color-accent, #ff9f5a)'}
@@ -150,7 +151,7 @@ export default function CourseResultView({ courseData, headerTitle }) {
                     className="course-result-card__place-thumb"
                     role="img"
                     aria-label={place.name}
-                    style={place.imageUrl ? { backgroundImage: `url("${place.imageUrl}")` } : undefined}
+                    style={place.imageUrl ? { backgroundImage: `url("${toHttps(place.imageUrl)}")` } : undefined}
                   />
                   <div>
                     <span className="course-result-card__place-name">{place.name}</span>

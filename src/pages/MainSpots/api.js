@@ -3,6 +3,7 @@
 // 실제 호출은 loading.jsx가 함 (next.path === '/spots'일 때).
 // GET /api/places/{placeId} - 상세보기 클릭 시 상세 정보 조회 (MainSpots.jsx가 호출).
 import { apiGet, apiPost } from '../../api/client';
+import { toHttps } from '../../utils/url';
 
 // ConditionInput의 companion 키(alone/friend/pet/parents/kid/partner) ->
 // 백엔드 RecommendationRequest.companion enum.
@@ -56,7 +57,7 @@ function adaptPlace(place) {
     id: place.placeId,
     name: place.name,
     summary: place.summary,
-    thumbnail: place.imageUrl || null,
+    thumbnail: toHttps(place.imageUrl) || null,
     lat: place.latitude,
     lng: place.longitude,
   };

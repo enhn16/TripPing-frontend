@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
 import WebLayout from '../../components/WebLayout';
 import {
   getUserName,
   formatDisplayName,
-  isLoggedIn,
-  logout,
   handleKakaoRedirect,
 } from '../../components/auth';
 import symbol from '../../assets/symbol.png';
@@ -27,7 +24,6 @@ export default function ThreeSelect() {
   // isLoggedIn/getUserName은 localStorage를 읽는 함수라 그 자체로는 리렌더를 안 일으킴.
   // 카카오 로그인 리다이렉트 처리가 끝난 뒤 화면을 갱신시키기 위한 트리거용 상태.
   const [, setAuthTick] = useState(0);
-  const loggedIn = isLoggedIn();
   // 카카오 로그인 닉네임이 있으면 그 이름, 비회원이면 '여행자'
   const displayName = formatDisplayName(getUserName());
   // /select는 카카오 로그인 Redirect URI. 카카오에서 ?code=...를 달고 돌아온 경우에만
@@ -35,7 +31,7 @@ export default function ThreeSelect() {
   useEffect(() => {
     handleKakaoRedirect()
       .then((handled) => {
-        if (handled) setAuthTick((v) => v + 1); // 로그인 성공 -> loggedIn/displayName 다시 계산되도록 리렌더
+        if (handled) setAuthTick((v) => v + 1); // 로그인 성공 -> displayName 다시 계산되도록 리렌더
       })
       .catch((err) => {
         // TODO: 토스트/모달 등 디자인이 정해지면 alert 대신 그걸로 교체
@@ -43,13 +39,6 @@ export default function ThreeSelect() {
         alert(err.message || '카카오 로그인에 실패했습니다.');
       });
   }, []);
-
-  const handleLogout = () => {
-    logout();
-    // getAuthToken() 기반으로 loggedIn을 매 렌더마다 다시 계산하는 구조라, 로그아웃 후
-    // 화면이 확실히 갱신되도록 시작페이지로 이동시킴
-    navigate('/');
-  };
 
   const handleSelectCategory = (categoryKey) => {
     clearStepState();
@@ -59,10 +48,6 @@ export default function ThreeSelect() {
   return (
     <WebLayout>
       <div className="three-select">
-        {loggedIn && <div className="three-select__topbar">
-          <button type="button" className="three-select__back-btn" onClick={handleLogout} aria-label="로그아웃"><LogOut size={18} /></button>
-        </div>}
-
         <div className="three-select__hero">
           <img src={symbol} alt="" className="three-select__symbol" />
           <p className="three-select__greeting">

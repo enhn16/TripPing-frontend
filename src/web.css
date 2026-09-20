@@ -71,5 +71,12 @@
  .main-spots__list .spot-card__summary { font-size: 16px; line-height: 1.7; }
 }
 @media (min-width: 800px) {
- .main-spots__list .spot-card__summary--clamp { display: block; -webkit-line-clamp: unset; line-clamp: unset; overflow-y: auto; }
+  .main-spots__list .spot-card__summary--clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }

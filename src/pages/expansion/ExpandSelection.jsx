@@ -4,6 +4,7 @@ import { ChevronLeft, Check, Compass } from 'lucide-react';
 import WebLayout from '../../components/WebLayout';
 import { loadKakaoMapScript, getCssVar } from '../../components/kakaoMap';
 import { saveStepState, loadStepState } from '../../components/sessionState';
+import { toHttps } from '../../utils/url';
 import './ExpandSelection.css';
 
 // 메인 관광지 핀 (원형 배지 + Compass 아이콘). .main-pin-badge 스타일과 동일하게 맞췄습니다.
@@ -308,7 +309,7 @@ export default function ExpandSelection() {
                 onClick={() => handleCardClick(place.placeId)}
                 ref={(node) => cardRefs.current.set(place.placeId, node)}
               >
-                <img src={place.imageUrl} alt={place.name} className="card-thumb" />
+                <img src={toHttps(place.imageUrl)} alt={place.name} className="card-thumb" />
 
                 <div className="card-info">
                   <div className={`card-title-badge ${isClicked ? 'active' : ''}`}>

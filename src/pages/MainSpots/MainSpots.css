@@ -279,6 +279,7 @@
   line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .spot-card__summary--clamp-3 {

@@ -2,6 +2,7 @@
 
 import { apiPost } from '../../api/client';
 import { isLoggedIn } from '../../components/auth';
+import { toHttps } from '../../utils/url';
 
 async function createCourse({
   mainPlaceId,
@@ -37,12 +38,18 @@ const formatTag = (t) =>
 function adaptCourseResponse(courseData) {
   const places = (courseData?.places ?? []).map((p) => ({
     ...p,
+    imageUrl: toHttps(p.imageUrl),
     description: p.summary,
   }));
 
   const tags = (courseData?.tags ?? []).map(formatTag).filter(Boolean);
 
-  return { ...courseData, places, tags };
+  return {
+    ...courseData,
+    mapImageUrl: toHttps(courseData?.mapImageUrl),
+    places,
+    tags,
+  };
 }
 
 export async function prepareCourseResult({

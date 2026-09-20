@@ -1,11 +1,19 @@
+import { useState } from 'react';
 import KakaoIcon from '../../components/KakaoIcon';
 import { Link } from 'react-router-dom';
-import { startKakaoLogin } from '../../components/auth';
+import { startKakaoLogin, isLoggedIn, logout } from '../../components/auth';
 import WebLayout from '../../components/WebLayout';
 import natureImg from '../../assets/nature.jpg';
 import './Landing.css';
 
 export default function Landing() {
+  const [loggedIn, setLoggedIn] = useState(() => isLoggedIn());
+
+  const handleLogout = () => {
+    logout();
+    setLoggedIn(false);
+  };
+
   return (
     <WebLayout>
       <section className="landing">
@@ -14,10 +22,19 @@ export default function Landing() {
           <h1>어디로 떠날까?<br />오늘의 여행을<br /><span>함께 그려봐요.</span></h1>
           <p className="landing__description">가고 싶은 곳과 함께할 사람을 알려주세요.<br />당신의 취향에 맞는 당일치기 코스를 찾아드려요.</p>
           <div className="landing__actions">
-            <Link className="landing__start" to="/select">로그인 없이 사용하기</Link>
-            <button type="button" className="landing__login" onClick={startKakaoLogin}><KakaoIcon />카카오 로그인</button>
+            {loggedIn ? (
+              <>
+                <Link className="landing__start" to="/select">계속해서 기록 남기기</Link>
+                <button type="button" className="landing__logout" onClick={handleLogout}>로그아웃</button>
+              </>
+            ) : (
+              <>
+                <Link className="landing__start" to="/select">로그인 없이 사용하기</Link>
+                <button type="button" className="landing__login" onClick={startKakaoLogin}><KakaoIcon />카카오 로그인</button>
+              </>
+            )}
           </div>
-          <p className="landing__note">로그인 없이도 여행을 계획할 수 있어요.</p>
+          {!loggedIn && <p className="landing__note">로그인 없이도 여행을 계획할 수 있어요.</p>}
         </div>
         <div className="landing__visual">
           <img src={natureImg} alt="초록빛 자연 속에서 즐기는 여유로운 하루 여행" />

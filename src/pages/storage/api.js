@@ -1,6 +1,7 @@
 // src/pages/storage/api.js
 import { apiGet } from '../../api/client';
 import { isLoggedIn } from '../../components/auth';
+import { toHttps } from '../../utils/url';
 
 const formatTag = (t) =>
   typeof t === 'string' ? (t.startsWith('#') ? t : `#${t}`) : null;
@@ -13,7 +14,7 @@ function adaptSummary(raw) {
     // storage.jsx에서 courseTitle과 title 둘 다 접근 가능하도록 매핑
     title: raw.courseTitle ?? '이름 없는 코스',
     courseTitle: raw.courseTitle ?? '이름 없는 코스',
-    mapImageUrl: raw.mapImageUrl ?? null,
+    mapImageUrl: toHttps(raw.mapImageUrl) ?? null,
     tags: (raw.tags ?? []).map(formatTag).filter(Boolean),
     // savedAt과 createdAt 둘 다 매핑 (실제 응답 필드명은 createdAt)
     savedAt: raw.createdAt,
@@ -45,10 +46,16 @@ export async function getSavedCourseDetail(savedCourseId) {
 
   const places = (detail?.places ?? []).map((p) => ({
     ...p,
+    imageUrl: toHttps(p.imageUrl),
     description: p.summary,
   }));
 
   const tags = (detail?.tags ?? []).map(formatTag).filter(Boolean);
 
-  return { ...detail, places, tags };
+  return {
+    ...detail,
+    mapImageUrl: toHttps(detail?.mapImageUrl),
+    places,
+    tags,
+  };
 }

@@ -6,6 +6,8 @@
 .landing__actions { display: flex; align-items: center; gap: 24px; margin-top: 32px; font-weight: 700; }
 .landing__start { padding: 18px 26px; background: var(--color-primary); color: white; border-radius: 14px; }
 .landing__login { padding: 18px 26px; border-radius: 14px; background: var(--color-kakao); color: var(--color-text); font-weight: 700; }
+.landing__logout { padding: 18px 26px; border-radius: 14px; background: var(--color-natural); color: var(--color-text); font-weight: 700; transition: background-color 0.15s; }
+.landing__logout:hover { background: #d0d5d7; }
 .landing__note { margin-top: 16px; color: #65747b; font-size: 13px; }
 .landing__visual { position: relative; height: clamp(400px, 56dvh, 660px); border-radius: 100px 24px 24px 24px; overflow: hidden; }
 .landing__visual img { width: 100%; height: 100%; object-fit: cover; }
