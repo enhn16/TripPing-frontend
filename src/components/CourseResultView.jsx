@@ -76,8 +76,8 @@ export default function CourseResultView({ courseData, headerTitle }) {
 
   return (
     <>
-      {/* ── 상단 헤더: 좌(이동 그룹) & 중앙(액션 버튼: 저장/공유) ── */}
-      <header className="course-result-header">
+      {/* ── 상단 헤더: 뒤로가기 & (저장 시) 기록 날짜 타이틀 / (코스 생성 직후) 액션 버튼 ── */}
+      <header className={`course-result-header ${headerTitle ? 'course-result-header--has-title' : ''}`}>
         <div className="course-result-header__group">
           <button
             className="course-result-header__box course-result-header__back"
@@ -86,20 +86,34 @@ export default function CourseResultView({ courseData, headerTitle }) {
           >
             <ChevronLeft size={20} />
           </button>
-          {headerTitle && <span className="course-result-header__title">{headerTitle}</span>}
         </div>
 
-        <div className="course-result-actions">
-          <button className="course-result-actions__save" onClick={handleSaveImage} disabled={saving || sharing}>
-            <Download size={20} /> {saving ? '저장 중...' : '이미지 저장'}
-          </button>
-          <button className="course-result-actions__share" onClick={handleShareImage} disabled={saving || sharing}>
-            <Share2 size={20} /> {sharing ? '공유 준비 중...' : '공유하기'}
-          </button>
-        </div>
+        {headerTitle && <h1 className="course-result-header__title">{headerTitle}</h1>}
+
+        {!headerTitle && (
+          <div className="course-result-actions">
+            <button className="course-result-actions__save" onClick={handleSaveImage} disabled={saving || sharing}>
+              <Download size={20} /> {saving ? '저장 중...' : '이미지 저장'}
+            </button>
+            <button className="course-result-actions__share" onClick={handleShareImage} disabled={saving || sharing}>
+              <Share2 size={20} /> {sharing ? '공유 준비 중...' : '공유하기'}
+            </button>
+          </div>
+        )}
       </header>
 
       <div className="course-result-content">
+        {headerTitle && (
+          <div className="course-result-actions course-result-actions--under-header">
+            <button className="course-result-actions__save" onClick={handleSaveImage} disabled={saving || sharing}>
+              <Download size={20} /> {saving ? '저장 중...' : '이미지 저장'}
+            </button>
+            <button className="course-result-actions__share" onClick={handleShareImage} disabled={saving || sharing}>
+              <Share2 size={20} /> {sharing ? '공유 준비 중...' : '공유하기'}
+            </button>
+          </div>
+        )}
+
         {/* ── 코스 결과 카드 ── */}
         <div className="course-result-card" ref={cardRef}>
         <div className="course-result-card__top">

@@ -22,6 +22,31 @@ body::-webkit-scrollbar {
   box-sizing: border-box;
 }
 
+.course-result-header--has-title {
+  position: relative;
+  justify-content: center;
+  min-height: 42px;
+}
+
+.course-result-header--has-title .course-result-header__group {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+}
+
+.course-result-header__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  text-align: center;
+  line-height: 42px;
+  padding: 0 48px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .course-result-header__group {
   display: flex;
   align-items: center;
@@ -320,6 +345,10 @@ body::-webkit-scrollbar {
   gap: 8px;
   padding: 0;
   margin: 0;
+}
+
+.course-result-actions--under-header {
+  margin-bottom: 16px;
 }
 
 .course-result-actions__save,

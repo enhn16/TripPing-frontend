@@ -47,8 +47,12 @@
  .archive-header { margin-bottom: 32px; }
  .course-result-header { position: relative; display: flex; align-items: center; justify-content: center; padding: 24px clamp(24px, 3vw, 64px) 0; width: 100%; box-sizing: border-box; }
  .course-result-header__group { position: absolute; left: clamp(24px, 3vw, 64px); top: 24px; }
- .course-result-header .course-result-actions { width: 100%; max-width: 520px; margin: 0 auto; display: flex; gap: 12px; }
- .course-result-header .course-result-actions button { flex: 1; height: 42px; font-size: 15px; }
+ .course-result-header__title { font-size: 20px; }
+ .course-result-header .course-result-actions,
+ .course-result-content .course-result-actions { width: 100%; max-width: 520px; margin: 0 auto; display: flex; gap: 12px; }
+ .course-result-content .course-result-actions--under-header { margin-bottom: 16px; }
+ .course-result-header .course-result-actions button,
+ .course-result-content .course-result-actions button { flex: 1; height: 42px; font-size: 15px; }
  .course-result-card { max-width: 520px; margin-top: 16px; padding: 28px 20px 18px; }
  .course-result-card__desc { max-width: 400px; }
 }
