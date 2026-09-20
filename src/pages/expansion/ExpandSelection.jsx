@@ -52,6 +52,64 @@ const FALLBACK_MAIN_PLACE = {
 
 const CATEGORIES = ['전체', '관광지', '식당', '카페'];
 
+function ExpandPlaceCard({
+  place,
+  isSelected,
+  isClicked,
+  onCardClick,
+  onToggleCheck,
+  cardRef,
+}) {
+  const titleRef = useRef(null);
+  const [isLongTitle, setIsLongTitle] = useState(() => (place?.name?.length ?? 0) >= 11);
+
+  useEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    const check = () => {
+      // 1줄: line-height 1.2 * 15px = 18px. 2줄 이상이면 offsetHeight > 25px.
+      setIsLongTitle(el.offsetHeight > 25);
+    };
+    check();
+    window.addEventListener('resize', check);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(check) : null;
+    if (ro) ro.observe(el);
+    return () => {
+      window.removeEventListener('resize', check);
+      if (ro) ro.disconnect();
+    };
+  }, [place?.name]);
+
+  return (
+    <div
+      ref={cardRef}
+      className={`place-card web-app-card ${isSelected ? 'selected' : ''} ${isClicked ? 'active' : ''}`}
+      onClick={() => onCardClick(place.placeId)}
+    >
+      <img src={toHttps(place.imageUrl)} alt={place.name} className="card-thumb" />
+
+      <div className="card-info">
+        <div className={`card-title-badge ${isClicked ? 'active' : ''}`}>
+          <h3 ref={titleRef} className="card-title">{place.name}</h3>
+        </div>
+        <p className={`card-summary ${isLongTitle ? 'card-summary--clamp-2' : 'card-summary--clamp-3'}`}>
+          {place.summary}
+        </p>
+      </div>
+
+      <div
+        className={`check-circle-btn ${isSelected ? 'checked' : ''}`}
+        onClick={(e) => onToggleCheck(e, place.placeId)}
+        role="button"
+        tabIndex={0}
+        aria-label={`${place.name} 선택`}
+      >
+        <Check size={14} color={isSelected ? '#ffffff' : '#D1D5DB'} strokeWidth={3} />
+      </div>
+    </div>
+  );
+}
+
 export default function ExpandSelection() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -298,47 +356,23 @@ export default function ExpandSelection() {
 
         {/* Card List (하단 버튼 아래로 스크롤) */}
         <div className="card-list web-app-scroll-y">
-          {filteredPlaces.map((place) => {
-            const isSelected = selectedIds.includes(place.placeId);
-            const isClicked = clickedPlaceId === place.placeId;
-
-            return (
-              <div
-                key={place.placeId}
-                className={`place-card web-app-card ${isSelected ? 'selected' : ''} ${isClicked ? 'active' : ''}`}
-                onClick={() => handleCardClick(place.placeId)}
-                ref={(node) => cardRefs.current.set(place.placeId, node)}
-              >
-                <img src={toHttps(place.imageUrl)} alt={place.name} className="card-thumb" />
-
-                <div className="card-info">
-                  <div className={`card-title-badge ${isClicked ? 'active' : ''}`}>
-                    <h3 className="card-title">{place.name}</h3>
-                  </div>
-                  <p
-                    className="card-summary"
-                    style={{
-                      display: '-webkit-box',
-                      WebkitBoxOrient: 'vertical',
-                      WebkitLineClamp: 2,
-                    }}
-                  >
-                    {place.summary}
-                  </p>
-                </div>
-
-                <div
-                  className={`check-circle-btn ${isSelected ? 'checked' : ''}`}
-                  onClick={(e) => handleToggleCheck(e, place.placeId)}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`${place.name} 선택`}
-                >
-                  <Check size={14} color={isSelected ? '#ffffff' : '#D1D5DB'} strokeWidth={3} />
-                </div>
-              </div>
-            );
-          })}
+          {filteredPlaces.map((place) => (
+            <ExpandPlaceCard
+              key={place.placeId}
+              place={place}
+              isSelected={selectedIds.includes(place.placeId)}
+              isClicked={clickedPlaceId === place.placeId}
+              onCardClick={handleCardClick}
+              onToggleCheck={handleToggleCheck}
+              cardRef={(node) => {
+                if (node) {
+                  cardRefs.current.set(place.placeId, node);
+                } else {
+                  cardRefs.current.delete(place.placeId);
+                }
+              }}
+            />
+          ))}
         </div>
 
         {/* Bottom CTA Button (하단 고정) */}
